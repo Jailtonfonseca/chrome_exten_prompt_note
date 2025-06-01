@@ -1,0 +1,6 @@
+{
+  "name": "AI Prompt Studio",
+  "description": "A personal hub for creating, managing, and enhancing AI prompts, with features for AI-assisted improvement and variation generation using the Gemini API.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
