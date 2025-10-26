@@ -1,106 +1,139 @@
-import { GoogleGenerativeAI, GenerativeModel, Content } from "@google/generative-ai";
-import { GEMINI_API_KEY, GEMINI_MODEL_NAME } from '../constants';
 
-let genAI: GoogleGenerativeAI | null = null;
-let model: GenerativeModel | null = null;
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GEMINI_API_KEY, GEMINI_TEXT_MODEL, SUPPORTED_AI_LANGUAGES } from '../constants';
 
-const initializeGemini = () => {
+if (!GEMINI_API_KEY) {
+  console.error("API_KEY is not set. Please ensure the API_KEY environment variable is configured.");
+}
+
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY || "YOUR_API_KEY_PLACEHOLDER" });
+
+const cleanApiResponse = (text: string): string => {
+  let cleanedText = text.trim();
+  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+  const match = cleanedText.match(fenceRegex);
+  if (match && match[2]) {
+    cleanedText = match[2].trim();
+  }
+  return cleanedText;
+};
+
+const getLanguageName = (languageCode: string): string => {
+  const lang = SUPPORTED_AI_LANGUAGES.find(l => l.code === languageCode);
+  return lang ? lang.name : 'English'; // Default to English if code not found
+};
+
+export const improvePromptWithGemini = async (promptText: string, aiLanguage: string): Promise<string> => {
   if (!GEMINI_API_KEY) {
-    console.error("Gemini API Key is missing. Please set it in constants.tsx or as an environment variable.");
-    // Potentially throw an error or return a specific status to be handled by the UI
-    // For now, we'll let it proceed, and API calls will fail.
+    throw new Error("Gemini API key is not configured.");
   }
-  // Ensure GEMINI_API_KEY is not undefined before passing it to GoogleGenerativeAI
-  if (GEMINI_API_KEY && !genAI) {
-    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({ model: GEMINI_MODEL_NAME });
-  }
-};
-
-// Call initialize on load, but it's safe to call multiple times.
-initializeGemini();
-
-export const cleanApiResponse = (text: string): string => {
-  // Remove Markdown formatting (e.g., **, ```, etc.)
-  // This is a basic implementation. More robust parsing might be needed
-  // depending on the complexity of the Gemini responses.
-  return text
-    .replace(/```[\s\S]*?```/g, content => content.replace(/```/g, '')) // Remove triple backticks but keep content
-    .replace(/(\*\*|__)(.*?)/g, '$2') // Bold
-    .replace(/(\*|_)(.*?)/g, '$2')   // Italics
-    .replace(/`([^`]+)`/g, '$1')       // Inline code
-    .trim();
-};
-
-const generateContentWithGemini = async (prompt: string | Content[]): Promise<string> => {
-  if (!model) {
-    initializeGemini(); // Attempt to re-initialize if model is not set
-    if (!model) {
-      console.error("Gemini model is not initialized. Check API Key and configuration.");
-      return "Error: Gemini model not initialized. Please check your API Key.";
-    }
-  }
-
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    // Directly access the text property as per documentation for simple text responses
-    return cleanApiResponse(response.text());
+    const languageName = getLanguageName(aiLanguage);
+    const systemInstruction = `You are an AI assistant specialized in refining and improving user-provided AI prompts. Make the prompt more effective, clear, and concise. Return only the improved prompt text, without any conversational fluff or explanations about your changes. Please provide your response in ${languageName}.`;
+
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: GEMINI_TEXT_MODEL,
+      contents: `Improve this AI prompt: "${promptText}"`,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+      }
+    });
+
+    return cleanApiResponse(response.text);
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    if (error instanceof Error && error.message.includes("API key not valid")) {
-        return "Error: Invalid Gemini API Key. Please check your configuration.";
+    console.error('Error improving prompt with Gemini:', error);
+    if (error instanceof Error) {
+       throw new Error(`Gemini API error: ${error.message}. Check your API key and network connection.`);
     }
-    return `Error generating content: ${error instanceof Error ? error.message : String(error)}`;
+    throw new Error('An unknown error occurred while improving the prompt with Gemini.');
   }
 };
 
-export const improvePrompt = async (promptText: string, targetLanguage: string): Promise<string> => {
-  const systemInstruction = `You are an AI assistant specialized in improving and refining user-provided prompts.
-The user wants to improve the following prompt.
-Analyze it and provide a revised version that is clearer, more effective, and tailored for Large Language Models.
-Consider adding detail, context, or constraints if appropriate.
-Respond ONLY with the improved prompt text, without any preamble or explanation.
-The response should be in ${targetLanguage}.`;
+export const generatePromptVariationsWithGemini = async (promptText: string, aiLanguage: string): Promise<string[]> => {
+  if (!GEMINI_API_KEY) {
+    throw new Error("Gemini API key is not configured.");
+  }
+  try {
+    const languageName = getLanguageName(aiLanguage);
+    const systemInstruction = `You are an AI assistant that generates 3 distinct variations of a given AI prompt. Each variation should explore a different angle or style. Return the variations as a plain text list, each variation on a new line, prefixed with 'Variation X: '. Do not include any other conversational text or markdown formatting beyond this simple list. Please provide your response in ${languageName}.`;
 
-  const fullPrompt: Content[] = [
-    { role: "system", parts: [{ text: systemInstruction }] },
-    { role: "user", parts: [{ text: promptText }] }
-  ];
-  return generateContentWithGemini(fullPrompt);
+    const requestPrompt = `Generate 3 distinct variations for the following AI prompt. Format them as a list:\n\n"${promptText}"`;
+
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: GEMINI_TEXT_MODEL,
+      contents: requestPrompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.8,
+      }
+    });
+
+    const rawText = cleanApiResponse(response.text);
+    const variations = rawText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.replace(/^Variation\s*\d*:\s*/i, '').trim())
+      .filter(line => line.length > 0);
+
+    if (variations.length === 0 && rawText.length > 0) {
+        return [rawText];
+    }
+    return variations.slice(0,3);
+
+  } catch (error) {
+    console.error('Error generating prompt variations with Gemini:', error);
+     if (error instanceof Error) {
+       throw new Error(`Gemini API error: ${error.message}. Check your API key and network connection.`);
+    }
+    throw new Error('An unknown error occurred while generating prompt variations with Gemini.');
+  }
 };
 
-export const generateVariations = async (promptText: string, targetLanguage: string, count: number = 3): Promise<string[]> => {
-  const systemInstruction = `You are an AI assistant specialized in generating variations of user-provided prompts.
-Generate ${count} distinct variations of the following prompt. Each variation should offer a different angle, style, or focus.
-List each variation clearly. Respond ONLY with the variations, each on a new line. Do not number them or add any extra text.
-The response should be in ${targetLanguage}.`;
+export const getPromptEnhancementIdeasWithGemini = async (promptText: string, aiLanguage: string): Promise<string[]> => {
+  if (!GEMINI_API_KEY) {
+    throw new Error("Gemini API key is not configured.");
+  }
+  try {
+    const languageName = getLanguageName(aiLanguage);
+    const systemInstruction = `You are an AI assistant. Given a user's AI prompt, provide 3-5 concise ideas to enhance it or add specific features.
+Example Input: 'Create a platformer game'
+Example Output (if English is selected):
+Add multiple levels with increasing difficulty
+Implement a power-up system
+Include a character customization option
 
-  const fullPrompt: Content[] = [
-    { role: "system", parts: [{ text: systemInstruction }] },
-    { role: "user", parts: [{ text: promptText }] }
-  ];
+Return these ideas as a plain text list, each idea on a new line.
+Do not use markdown list formatting (e.g., '-', '*', or numbers).
+Do not include any conversational intro/outro or explanations about your suggestions.
+Please provide your response in ${languageName}.`;
 
-  const singleStringResponse = await generateContentWithGemini(fullPrompt);
-  // Assuming variations are separated by newlines
-  return singleStringResponse.split('\n').map(v => cleanApiResponse(v.trim())).filter(v => v.length > 0);
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: GEMINI_TEXT_MODEL,
+      contents: `Here is the current prompt, provide enhancement ideas for it: "${promptText}"`,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.75,
+      }
+    });
+
+    const rawText = cleanApiResponse(response.text);
+    const ideas = rawText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    if (ideas.length === 0 && rawText.length > 0) {
+        return [rawText];
+    }
+    return ideas.slice(0, 5);
+
+  } catch (error) {
+    console.error('Error getting prompt enhancement ideas with Gemini:', error);
+    if (error instanceof Error) {
+      throw new Error(`Gemini API error: ${error.message}. Check your API key and network connection.`);
+    }
+    throw new Error('An unknown error occurred while getting prompt enhancement ideas.');
+  }
 };
-
-export const suggestIdeas = async (promptText: string, targetLanguage: string): Promise<string[]> => {
-  const systemInstruction = `You are an AI assistant specialized in brainstorming and suggesting improvements for prompts.
-For the following prompt, provide a few actionable ideas or suggestions to enhance it, add new features, or explore related concepts.
-List each idea clearly. Respond ONLY with the ideas, each on a new line. Do not number them or add any extra text.
-The response should be in ${targetLanguage}.`;
-
-  const fullPrompt: Content[] = [
-    { role: "system", parts: [{ text: systemInstruction }] },
-    { role: "user", parts: [{ text: promptText }] }
-  ];
-
-  const singleStringResponse = await generateContentWithGemini(fullPrompt);
-  // Assuming ideas are separated by newlines
-  return singleStringResponse.split('\n').map(idea => cleanApiResponse(idea.trim())).filter(idea => idea.length > 0);
-};
-
-// Ensure this file can be imported and used as a module
-export {};

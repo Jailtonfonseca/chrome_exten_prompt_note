@@ -1,13 +1,19 @@
+
 export interface Prompt {
   id: string;
+  userId: string; // Adicionado para associar prompt ao usuário
   title: string;
   text: string;
-  createdAt: string; // ISO string format for dates
-  updatedAt: string; // ISO string format for dates
+  category?: string; // Optional category
+  tags?: string[];   // Optional tags
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface User {
   id: string;
   username: string;
-  password?: string; // Password is for simulation, might be omitted in some contexts
+  passwordHash: string; // Para simulação, em produção use bcrypt
 }
+
+// You can add more shared types here as the application grows.

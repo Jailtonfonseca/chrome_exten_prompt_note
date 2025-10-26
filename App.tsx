@@ -15,11 +15,12 @@ import Navbar from './components/Navbar';
 import PromptCard from './components/PromptCard';
 import PromptEditorModal from './components/PromptEditorModal';
 import AuthModal from './components/AuthModal';
-import { PlusIcon, SUPPORTED_AI_LANGUAGES } from './constants';
+import { SUPPORTED_AI_LANGUAGES } from './constants';
 
 type Theme = 'light' | 'dark';
 
 const App: React.FC = () => {
+  console.log("App component is rendering");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -197,7 +198,6 @@ const App: React.FC = () => {
               onClick={() => handleOpenPromptModal()}
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out flex items-center justify-center mx-auto"
             >
-              <PlusIcon className="w-5 h-5 mr-2" />
               Create Your First Prompt
             </button>
           </div>
