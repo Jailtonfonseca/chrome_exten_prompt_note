@@ -1,67 +1,47 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
-  children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl'; // Optional size prop
+  children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey);
+      const timer = setTimeout(() => {
+        setIsMounted(true);
+      }, 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMounted(false);
     }
+  }, [isOpen]);
 
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
+  if (!isOpen && !isMounted) { // Only return null if fully closed and unmounted for transition
     return null;
   }
 
-  const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-  };
-
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4"
-      onClick={onClose} // Close on backdrop click
-      aria-modal="true"
-      role="dialog"
+      className={`
+        fixed inset-0 flex items-center justify-center p-4 z-50
+        bg-black transition-opacity duration-300 ease-in-out
+        ${isOpen && isMounted ? 'bg-opacity-75 dark:bg-opacity-80 opacity-100' : 'bg-opacity-0 opacity-0'}
+      `}
+      onClick={onClose}
     >
       <div
-        className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all`}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
+        className={`
+          bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto
+          transform transition-all duration-300 ease-in-out
+          ${isOpen && isMounted ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
+        `}
+        onClick={(e) => e.stopPropagation()}
       >
-        {title && (
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              aria-label="Close modal"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-        <div>{children}</div>
+        {children}
       </div>
     </div>
   );
