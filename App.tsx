@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Prompt, User } from './types';
 import { 
   getPrompts, 
@@ -9,7 +9,13 @@ import {
   getStoredTheme, 
   setStoredTheme,
   getStoredAiLanguage,
-  setStoredAiLanguage
+  setStoredAiLanguage,
+  addToPromptHistory,
+  getPromptHistory,
+  exportUserData,
+  importUserData,
+  togglePromptFavorite,
+  incrementPromptUsage
 } from './services/localStorageService';
 import Navbar from './components/Navbar';
 import PromptCard from './components/PromptCard';
@@ -29,10 +35,12 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   
-  // Initialize with defaults, load async in useEffect
   const [theme, setTheme] = useState<Theme>('dark'); 
   const [aiLanguage, setAiLanguage] = useState<string>(SUPPORTED_AI_LANGUAGES[0].code);
   const [isLoading, setIsLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [promptHistory, setPromptHistory] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -114,10 +122,90 @@ const App: React.FC = () => {
     await savePrompts(currentUser.id, updatedPrompts);
   }, [currentUser]);
 
-  const handleCopyPrompt = useCallback((text: string) => {
+  const handleCopyPrompt = useCallback(async (text: string, id: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => alert('Prompt copied to clipboard!')) // Consider using a less intrusive notification for extensions
+      .then(() => {
+        alert('Prompt copied to clipboard!');
+        if (currentUser) {
+          addToPromptHistory(currentUser.id, text);
+          incrementPromptUsage(currentUser.id, id);
+        }
+      })
       .catch(err => console.error('Failed to copy text: ', err));
+  }, [currentUser]);
+
+  const handleToggleFavorite = useCallback(async (promptId: string) => {
+    if (!currentUser) return;
+    await togglePromptFavorite(currentUser.id, promptId);
+    const updatedPrompts = prompts.map(p => 
+      p.id === promptId ? { ...p, isFavorite: !p.isFavorite } : p
+    );
+    setPrompts(updatedPrompts);
+  }, [currentUser, prompts]);
+
+  const handleExport = useCallback(async () => {
+    if (!currentUser) return;
+    const data = await exportUserData(currentUser.id);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prompt-studio-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [currentUser]);
+
+  const handleImport = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const data = event.target?.result as string;
+      const success = await importUserData(currentUser.id, data);
+      if (success) {
+        setPrompts(await getPrompts(currentUser.id));
+        alert('Data imported successfully!');
+      } else {
+        alert('Failed to import data. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }, [currentUser]);
+
+  const handleShowHistory = useCallback(async () => {
+    if (!currentUser) return;
+    const history = await getPromptHistory(currentUser.id);
+    setPromptHistory(history);
+    setShowHistory(true);
+  }, [currentUser]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        if (currentUser) handleOpenPromptModal();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search prompts..."]') as HTMLInputElement;
+        searchInput?.focus();
+      }
+      if (e.key === 'Escape' && showHistory) {
+        setShowHistory(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentUser, showHistory]);
+
+  const handleCloseHistory = useCallback(() => {
+    setShowHistory(false);
   }, []);
 
   const handleLoginSuccess = async (user: User) => {
@@ -164,6 +252,9 @@ const App: React.FC = () => {
         toggleTheme={toggleTheme}
         aiLanguage={aiLanguage}
         onAiLanguageChange={handleAiLanguageChange}
+        onExport={handleExport}
+        onImport={handleImport}
+        onShowHistory={handleShowHistory}
       />
       
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -213,7 +304,8 @@ const App: React.FC = () => {
                 prompt={prompt}
                 onEdit={() => handleOpenPromptModal(prompt)}
                 onDelete={() => handleDeletePrompt(prompt.id)}
-                onCopy={() => handleCopyPrompt(prompt.text)}
+                onCopy={() => handleCopyPrompt(prompt.text, prompt.id)}
+                onToggleFavorite={() => handleToggleFavorite(prompt.id)}
               />
             ))}
           </div>
@@ -243,6 +335,51 @@ const App: React.FC = () => {
           setMode={setAuthModalMode}
         />
       )}
+
+      {showHistory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleCloseHistory}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Prompt History</h2>
+            </div>
+            <div className="p-4">
+              {promptHistory.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">No history yet. Copy some prompts to see them here!</p>
+              ) : (
+                <ul className="space-y-2">
+                  {promptHistory.map((text, index) => (
+                    <li key={index} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                      <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-2">{text}</p>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(text).then(() => alert('Copied!'))}
+                        className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 hover:underline"
+                      >
+                        Copy again
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleCloseHistory}
+                className="w-full bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImportFile}
+        accept=".json"
+        className="hidden"
+      />
 
        <footer className="text-center py-4 text-sm text-gray-600 dark:text-gray-500 border-t border-gray-300 dark:border-gray-700">
         AI Prompt Studio

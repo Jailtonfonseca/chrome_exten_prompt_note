@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlusIcon, SearchIcon, SunIcon, MoonIcon, SUPPORTED_AI_LANGUAGES } from '../constants';
+import { PlusIcon, SearchIcon, SunIcon, MoonIcon, SUPPORTED_AI_LANGUAGES, ArrowDownTrayIcon, ArrowUpTrayIcon, ClockIcon, CogIcon } from '../constants';
 import { User } from '../types';
 import IconButton from './IconButton';
 
@@ -14,6 +14,10 @@ interface NavbarProps {
   toggleTheme: () => void;
   aiLanguage: string;
   onAiLanguageChange: (languageCode: string) => void;
+  onExport?: () => void;
+  onImport?: () => void;
+  onShowHistory?: () => void;
+  onOpenSettings?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -27,6 +31,10 @@ const Navbar: React.FC<NavbarProps> = ({
   toggleTheme,
   aiLanguage,
   onAiLanguageChange,
+  onExport,
+  onImport,
+  onShowHistory,
+  onOpenSettings,
 }) => {
   return (
     <nav className="bg-gray-200 dark:bg-gray-800 shadow-lg transition-colors duration-300">
@@ -62,13 +70,57 @@ const Navbar: React.FC<NavbarProps> = ({
               </select>
           </div>
            <IconButton
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
-            title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
-            className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 order-4 sm:order-none"
-          >
-            {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-          </IconButton>
+             onClick={toggleTheme}
+             aria-label={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+             title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+             className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 order-4 sm:order-none"
+           >
+             {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+           </IconButton>
+           {currentUser && (
+             <>
+               {onShowHistory && (
+                 <IconButton
+                   onClick={onShowHistory}
+                   aria-label="Show history"
+                   title="History"
+                   className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                 >
+                   <ClockIcon className="w-5 h-5" />
+                 </IconButton>
+               )}
+               {onExport && (
+                 <IconButton
+                   onClick={onExport}
+                   aria-label="Export data"
+                   title="Export"
+                   className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                 >
+                   <ArrowDownTrayIcon className="w-5 h-5" />
+                 </IconButton>
+               )}
+               {onImport && (
+                 <IconButton
+                   onClick={onImport}
+                   aria-label="Import data"
+                   title="Import"
+                   className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                 >
+                   <ArrowUpTrayIcon className="w-5 h-5" />
+                 </IconButton>
+               )}
+               {onOpenSettings && (
+                 <IconButton
+                   onClick={onOpenSettings}
+                   aria-label="Settings"
+                   title="Settings"
+                   className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                 >
+                   <CogIcon className="w-5 h-5" />
+                 </IconButton>
+               )}
+             </>
+           )}
           {currentUser ? (
             <>
               <button

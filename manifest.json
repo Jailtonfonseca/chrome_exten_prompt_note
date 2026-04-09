@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Prompt Studio",
-  "version": "1.0",
-  "description": "A personal hub for creating, managing, and enhancing AI prompts, with features for AI-assisted improvement and variation generation using the Gemini API.",
+  "version": "2.0",
+  "description": "Gerenciador de prompts de IA com history, favoritos, tags, export/import e atalhos de teclado",
   "action": {
     "default_popup": "index.html",
     "default_icon": {

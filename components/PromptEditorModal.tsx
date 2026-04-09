@@ -18,6 +18,8 @@ interface PromptEditorModalProps {
 const PromptEditorModal: React.FC<PromptEditorModalProps> = ({ isOpen, onClose, onSave, initialPrompt, userId, aiLanguage }) => {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState('');
   const [isLoadingImprove, setIsLoadingImprove] = useState(false);
   const [isLoadingVariations, setIsLoadingVariations] = useState(false);
   const [isLoadingEnhancements, setIsLoadingEnhancements] = useState(false);
@@ -29,9 +31,13 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = ({ isOpen, onClose, 
     if (initialPrompt) {
       setTitle(initialPrompt.title);
       setText(initialPrompt.text);
+      setCategory(initialPrompt.category || '');
+      setTags(initialPrompt.tags?.join(', ') || '');
     } else {
       setTitle('');
       setText('');
+      setCategory('');
+      setTags('');
     }
     setError(null);
     setSuggestedVariations([]);
@@ -49,11 +55,16 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = ({ isOpen, onClose, 
       return;
     }
     const now = new Date().toISOString();
+    const tagList = tags.split(',').map(t => t.trim()).filter(t => t);
     onSave({
       id: initialPrompt?.id || crypto.randomUUID(),
       userId: initialPrompt?.userId || userId,
       title,
       text,
+      category: category || undefined,
+      tags: tagList.length > 0 ? tagList : undefined,
+      isFavorite: initialPrompt?.isFavorite,
+      usageCount: initialPrompt?.usageCount,
       createdAt: initialPrompt?.createdAt || now,
       updatedAt: now,
     });
@@ -167,6 +178,31 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = ({ isOpen, onClose, 
               placeholder="Enter your AI prompt here..."
               aria-required="true"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="promptCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category (optional)</label>
+              <input
+                id="promptCategory"
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-200 rounded-md p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors duration-300"
+                placeholder="e.g., Marketing, Coding, Writing"
+              />
+            </div>
+            <div>
+              <label htmlFor="promptTags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma separated)</label>
+              <input
+                id="promptTags"
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-200 rounded-md p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors duration-300"
+                placeholder="e.g., ai, gpt, marketing"
+              />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">

@@ -6,6 +6,9 @@ const USERS_KEY = 'aiPromptStudio_users';
 const CURRENT_USER_SESSION_KEY = 'aiPromptStudio_currentUser';
 const THEME_KEY = 'aiPromptStudio_theme';
 const AI_LANGUAGE_KEY = 'aiPromptStudio_aiLanguage';
+const PROMPT_HISTORY_KEY = 'aiPromptStudio_promptHistory';
+const SETTINGS_KEY = 'aiPromptStudio_settings';
+const MAX_HISTORY_ITEMS = 50;
 
 // Theme Management
 export const getStoredTheme = async (): Promise<'light' | 'dark' | null> => {
@@ -126,5 +129,131 @@ export const savePrompts = async (userId: string, prompts: Prompt[]): Promise<vo
     localStorage.setItem(`${PROMPTS_KEY_PREFIX}${userId}`, JSON.stringify(prompts));
   } catch (error) {
     console.error("Error saving user prompts to localStorage:", error);
+  }
+};
+
+// Prompt History (last used prompts)
+export const addToPromptHistory = async (userId: string, promptText: string): Promise<void> => {
+  if (!userId) return;
+  try {
+    const historyKey = `${PROMPT_HISTORY_KEY}_${userId}`;
+    const existing = localStorage.getItem(historyKey);
+    const history: string[] = existing ? JSON.parse(existing) : [];
+    
+    const filtered = history.filter(p => p !== promptText);
+    const updated = [promptText, ...filtered].slice(0, MAX_HISTORY_ITEMS);
+    localStorage.setItem(historyKey, JSON.stringify(updated));
+  } catch (error) {
+    console.error("Error adding to prompt history:", error);
+  }
+};
+
+export const getPromptHistory = async (userId: string): Promise<string[]> => {
+  if (!userId) return [];
+  try {
+    const historyKey = `${PROMPT_HISTORY_KEY}_${userId}`;
+    const history = localStorage.getItem(historyKey);
+    return history ? JSON.parse(history) : [];
+  } catch (error) {
+    console.error("Error getting prompt history:", error);
+    return [];
+  }
+};
+
+export const clearPromptHistory = async (userId: string): Promise<void> => {
+  if (!userId) return;
+  try {
+    const historyKey = `${PROMPT_HISTORY_KEY}_${userId}`;
+    localStorage.removeItem(historyKey);
+  } catch (error) {
+    console.error("Error clearing prompt history:", error);
+  }
+};
+
+// Increment usage count for a prompt
+export const incrementPromptUsage = async (userId: string, promptId: string): Promise<void> => {
+  if (!userId) return;
+  const prompts = await getPrompts(userId);
+  const updated = prompts.map(p => 
+    p.id === promptId ? { ...p, usageCount: (p.usageCount || 0) + 1 } : p
+  );
+  await savePrompts(userId, updated);
+};
+
+// Toggle favorite
+export const togglePromptFavorite = async (userId: string, promptId: string): Promise<void> => {
+  if (!userId) return;
+  const prompts = await getPrompts(userId);
+  const updated = prompts.map(p => 
+    p.id === promptId ? { ...p, isFavorite: !p.isFavorite } : p
+  );
+  await savePrompts(userId, updated);
+};
+
+// Settings Management
+export interface Settings {
+  keyboardShortcuts: boolean;
+  notifications: boolean;
+  autoSave: boolean;
+  showHistory: boolean;
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  keyboardShortcuts: true,
+  notifications: true,
+  autoSave: true,
+  showHistory: true,
+};
+
+export const getSettings = async (userId: string): Promise<Settings> => {
+  if (!userId) return DEFAULT_SETTINGS;
+  try {
+    const settingsKey = `${SETTINGS_KEY}_${userId}`;
+    const settings = localStorage.getItem(settingsKey);
+    return settings ? { ...DEFAULT_SETTINGS, ...JSON.parse(settings) } : DEFAULT_SETTINGS;
+  } catch (error) {
+    console.error("Error reading settings:", error);
+    return DEFAULT_SETTINGS;
+  }
+};
+
+export const saveSettings = async (userId: string, settings: Partial<Settings>): Promise<void> => {
+  if (!userId) return;
+  try {
+    const settingsKey = `${SETTINGS_KEY}_${userId}`;
+    const current = await getSettings(userId);
+    localStorage.setItem(settingsKey, JSON.stringify({ ...current, ...settings }));
+  } catch (error) {
+    console.error("Error saving settings:", error);
+  }
+};
+
+// Export/Import
+export const exportUserData = async (userId: string): Promise<string> => {
+  if (!userId) return '{}';
+  const prompts = await getPrompts(userId);
+  const history = await getPromptHistory(userId);
+  const settings = await getSettings(userId);
+  return JSON.stringify({ prompts, history, settings }, null, 2);
+};
+
+export const importUserData = async (userId: string, data: string): Promise<boolean> => {
+  if (!userId) return false;
+  try {
+    const parsed = JSON.parse(data);
+    if (parsed.prompts) {
+      await savePrompts(userId, parsed.prompts);
+    }
+    if (parsed.history) {
+      const historyKey = `${PROMPT_HISTORY_KEY}_${userId}`;
+      localStorage.setItem(historyKey, JSON.stringify(parsed.history));
+    }
+    if (parsed.settings) {
+      await saveSettings(userId, parsed.settings);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error importing data:", error);
+    return false;
   }
 };

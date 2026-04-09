@@ -1,14 +1,42 @@
-# Run and deploy your AI Studio app
+# AI Prompt Studio
 
-This contains everything you need to run your app locally.
+Extensão Chrome para gerenciamento de prompts de IA com recursos avançados.
 
-## Run Locally
+## Novas Funcionalidades
 
-**Prerequisites:**  Node.js
+### Core
+- Criar, editar, copiar e excluir prompts
+- Melhorar prompts com IA (Gemini)
+- Gerar variações de prompts
+- Sugestões de enhancement
+- dark/light mode
 
+### Avançadas
+- **History** - Salva os últimos 50 prompts copiados
+- **Favoritos** - Marca prompts favoritos com um clique
+- **Tags** - Organize prompts com tags e categorias
+- **Contagem de uso** - Acompanha quantas vezes cada prompt foi usado
+- **Export/Import** - Backup em JSON, sincronize entre dispositivos
+- **Atalhos de teclado**
+  - `Ctrl+N` - Novo prompt
+  - `Ctrl+F` - Buscar prompts
+  - `Esc` - Fechar modal
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Como Instalar
+
+1. Clone o repositório
+2. Instale dependências: `npm install`
+3. Configure a API key: crie arquivo `.env.local` com `GEMINI_API_KEY=sua_chave`
+4. Execute: `npm run dev`
+5. Carregue em `/dist` no Chrome em `chrome://extensions/`
+
+## Tecnologias
+- React + TypeScript
+- Vite
+- Gemini API
+- TailwindCSS
+
+## Keyboard Shortcuts
+- `Ctrl+N` - New prompt
+- `Ctrl+F` - Search
+- `Esc` - Close modal
