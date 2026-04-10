@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Prompt, User } from './types';
+import { Prompt, User, ViewType } from './types';
 import { 
   getPrompts, 
   savePrompts, 
@@ -21,6 +21,7 @@ import Navbar from './components/Navbar';
 import PromptCard from './components/PromptCard';
 import PromptEditorModal from './components/PromptEditorModal';
 import AuthModal from './components/AuthModal';
+import WikiView from './components/WikiView';
 import { SUPPORTED_AI_LANGUAGES } from './constants';
 
 type Theme = 'light' | 'dark';
@@ -40,6 +41,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [promptHistory, setPromptHistory] = useState<string[]>([]);
+  const [activeView, setActiveView] = useState<ViewType>('prompts');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -188,12 +190,18 @@ const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
-        if (currentUser) handleOpenPromptModal();
+        if (currentUser && activeView === 'prompts') handleOpenPromptModal();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         const searchInput = document.querySelector('input[placeholder="Search prompts..."]') as HTMLInputElement;
         searchInput?.focus();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+        e.preventDefault();
+        if (currentUser) {
+          setActiveView(prev => prev === 'prompts' ? 'wiki' : 'prompts');
+        }
       }
       if (e.key === 'Escape' && showHistory) {
         setShowHistory(false);
@@ -202,7 +210,7 @@ const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser, showHistory]);
+  }, [currentUser, showHistory, activeView]);
 
   const handleCloseHistory = useCallback(() => {
     setShowHistory(false);
@@ -255,6 +263,8 @@ const App: React.FC = () => {
         onExport={handleExport}
         onImport={handleImport}
         onShowHistory={handleShowHistory}
+        activeView={activeView}
+        onViewChange={setActiveView}
       />
       
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -281,6 +291,8 @@ const App: React.FC = () => {
               It's for demonstration purposes only.
             </p>
           </div>
+        ) : activeView === 'wiki' ? (
+          <WikiView userId={currentUser.id} />
         ) : filteredPrompts.length === 0 && !searchTerm ? (
            <div className="text-center py-12">
             <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-400 mb-4">No prompts yet, {currentUser.username}!</h2>

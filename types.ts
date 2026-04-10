@@ -24,4 +24,15 @@ export interface AppSettings {
   autoSave: boolean;
 }
 
-// You can add more shared types here as the application grows.
+export interface WikiPage {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  links: string[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ViewType = 'prompts' | 'wiki';
