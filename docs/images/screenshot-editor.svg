@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="overlay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e2e;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#2d2d44;stop-opacity:0.95"/>
+    </linearGradient>
+    <linearGradient id="modal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d3d5c"/>
+      <stop offset="100%" style="stop-color:#2d2d44"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Overlay -->
+  <rect width="800" height="600" fill="url(#overlay)"/>
+
+  <!-- Modal -->
+  <rect x="150" y="80" width="500" height="440" rx="16" fill="url(#modal)"/>
+
+  <!-- Modal Header -->
+  <rect x="150" y="80" width="500" height="60" rx="16" fill="#252536"/>
+  <rect x="150" y="124" width="500" height="16" fill="#252536"/>
+  <text x="180" y="118" font-family="Arial" font-size="18" fill="#8b5cf6" font-weight="bold">New Prompt</text>
+
+  <!-- Close button -->
+  <circle cx="620" cy="110" r="15" fill="#3d3d5c"/>
+  <text x="615" y="115" font-family="Arial" font-size="16" fill="#888">✕</text>
+
+  <!-- Title input -->
+  <text x="180" y="175" font-family="Arial" font-size="12" fill="#94a3b8">Title</text>
+  <rect x="180" y="185" width="440" height="40" rx="8" fill="#252536"/>
+  <text x="195" y="210" font-family="Arial" font-size="13" fill="#666">Enter prompt title...</text>
+
+  <!-- Prompt content textarea -->
+  <text x="180" y="255" font-family="Arial" font-size="12" fill="#94a3b8">Prompt Content</text>
+  <rect x="180" y="265" width="440" height="120" rx="8" fill="#252536"/>
+  <text x="195" y="290" font-family="Arial" font-size="12" fill="#666">You are an expert code reviewer. Analyze the</text>
+  <text x="195" y="310" font-family="Arial" font-size="12" fill="#666">following code for bugs, performance issues...</text>
+
+  <!-- Tags input -->
+  <text x="180" y="415" font-family="Arial" font-size="12" fill="#94a3b8">Tags (comma separated)</text>
+  <rect x="180" y="425" width="440" height="40" rx="8" fill="#252536"/>
+  <rect x="190" y="435" width="60" height="22" rx="11" fill="#6366f1"/>
+  <text x="200" y="450" font-family="Arial" font-size="10" fill="#fff">#coding</text>
+  <rect x="258" y="435" width="50" height="22" rx="11" fill="#8b5cf6"/>
+  <text x="268" y="450" font-family="Arial" font-size="10" fill="#fff">#review</text>
+
+  <!-- AI Enhancement buttons -->
+  <rect x="180" y="480" width="140" height="30" rx="8" fill="#6366f1"/>
+  <text x="200" y="499" font-family="Arial" font-size="11" fill="#fff">✨ Improve with AI</text>
+
+  <rect x="330" y="480" width="130" height="30" rx="8" fill="#8b5cf6"/>
+  <text x="350" y="499" font-family="Arial" font-size="11" fill="#fff">🔄 Generate Variants</text>
+
+  <!-- Action buttons -->
+  <rect x="540" y="480" width="80" height="30" rx="8" fill="#374151"/>
+  <text x="560" y="499" font-family="Arial" font-size="11" fill="#fff">Cancel</text>
+
+  <rect x="420" y="480" width="110" height="30" rx="8" fill="#6366f1"/>
+  <text x="448" y="499" font-family="Arial" font-size="11" fill="#fff">Save Prompt</text>
+</svg>

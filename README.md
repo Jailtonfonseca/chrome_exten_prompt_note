@@ -2,7 +2,21 @@
 
 Extensão Chrome para gerenciamento de prompts de IA com recursos avançados.
 
-## Novas Funcionalidades
+## Screenshots
+
+### Dark Mode (Padrão)
+![Dark Mode](./docs/images/screenshot-main.svg)
+
+### Light Mode
+![Light Mode](./docs/images/screenshot-light.svg)
+
+### Editor de Prompts
+![Prompt Editor](./docs/images/screenshot-editor.svg)
+
+### Histórico
+![History](./docs/images/screenshot-history.svg)
+
+## Funcionalidades
 
 ### Core
 - Criar, editar, copiar e excluir prompts

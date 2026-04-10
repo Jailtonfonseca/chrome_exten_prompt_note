@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="overlay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e2e;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#2d2d44;stop-opacity:0.95"/>
+    </linearGradient>
+    <linearGradient id="modal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d3d5c"/>
+      <stop offset="100%" style="stop-color:#2d2d44"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Overlay -->
+  <rect width="800" height="600" fill="url(#overlay)"/>
+
+  <!-- Modal -->
+  <rect x="200" y="100" width="400" height="400" rx="16" fill="url(#modal)"/>
+
+  <!-- Modal Header -->
+  <rect x="200" y="100" width="400" height="60" rx="16" fill="#252536"/>
+  <rect x="200" y="144" width="400" height="16" fill="#252536"/>
+  <text x="230" y="138" font-family="Arial" font-size="18" fill="#8b5cf6" font-weight="bold">📜 Prompt History</text>
+
+  <!-- Close button -->
+  <circle cx="570" cy="130" r="15" fill="#3d3d5c"/>
+  <text x="565" y="135" font-family="Arial" font-size="16" fill="#888">✕</text>
+
+  <!-- History items -->
+  <!-- Item 1 -->
+  <rect x="220" y="180" width="360" height="60" rx="8" fill="#252536"/>
+  <text x="235" y="205" font-family="Arial" font-size="11" fill="#e2e8f0">You are an expert code reviewer. Analyze the following code...</text>
+  <rect x="235" y="218" width="70" height="18" rx="4" fill="#6366f1"/>
+  <text x="248" y="231" font-family="Arial" font-size="9" fill="#fff">Copy again</text>
+
+  <!-- Item 2 -->
+  <rect x="220" y="250" width="360" height="60" rx="8" fill="#252536"/>
+  <text x="235" y="275" font-family="Arial" font-size="11" fill="#e2e8f0">Generate optimized SQL queries for the given schema...</text>
+  <rect x="235" y="288" width="70" height="18" rx="4" fill="#6366f1"/>
+  <text x="248" y="301" font-family="Arial" font-size="9" fill="#fff">Copy again</text>
+
+  <!-- Item 3 -->
+  <rect x="220" y="320" width="360" height="60" rx="8" fill="#252536"/>
+  <text x="235" y="345" font-family="Arial" font-size="11" fill="#e2e8f0">Write clear and concise error messages for validation...</text>
+  <rect x="235" y="358" width="70" height="18" rx="4" fill="#6366f1"/>
+  <text x="248" y="371" font-family="Arial" font-size="9" fill="#fff">Copy again</text>
+
+  <!-- Item 4 -->
+  <rect x="220" y="390" width="360" height="60" rx="8" fill="#252536"/>
+  <text x="235" y="415" font-family="Arial" font-size="11" fill="#e2e8f0">Create comprehensive API documentation with examples...</text>
+  <rect x="235" y="428" width="70" height="18" rx="4" fill="#6366f1"/>
+  <text x="248" y="441" font-family="Arial" font-size="9" fill="#fff">Copy again</text>
+
+  <!-- Footer -->
+  <rect x="220" y="460" width="360" height="30" rx="8" fill="#374151"/>
+  <text x="345" y="479" font-family="Arial" font-size="12" fill="#fff">Close</text>
+</svg>
